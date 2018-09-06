@@ -2,7 +2,7 @@
 
 #always double check all the steps before using this template
 #especially for the photodiode and logs rejection (need to be edited)
-# edit covariance part
+# edit covariance part accordingly
 
 
 # ----------File structure-----------#
@@ -24,15 +24,16 @@ expt= 'TwoTones' #experiment name as written on the raw.fif
 ROOT = '/Users/my_user/data_file/'
 os.chdir(ROOT)
 subjects_dir = ROOT+'MRI/'
-subjects = ['A0176', 'A0192', 'A0216']
+subjects = ['A0176', 'A0192', 'A0216'] #list of subjs
 event_id = dict(hi=223, lo=191)
-conditions=['hi', 'lo'] #must be same names as in event_id. Used to average over conditions (evoked)
 #===========================#
 
 '''==========================================================================='''
 '''                           PART 1: Filter, bads, ICA                       '''
 '''==========================================================================='''
-#Check which subj dont have ICA files. It looks for a ..._ICA-raw.fif file. Post ICA+filtered data must be named accordingly
+
+# ------------------ Check which subj dont have ICA files --------------------- #
+#Looks for a ..._ICA-raw.fif file. Post ICA+filtered data must be named accordingly
 No_ica=[]
 for subj in subjects:
     if os.path.isfile('MEG/%s/%s_%s_ICA-raw.fif'%(subj, subj, expt)):
@@ -42,26 +43,39 @@ for subj in subjects:
 print ">> ICA not done for %s (%s)" %(No_ica, len(No_ica))
 
 
-#==============================================================================#
-#                  Manually do ICA for subjs in No_ica:                        #
-#==============================================================================#
-bads=[]
+# ----------------------------------- ICA ------------------------------------ #
+# compute and save ICA
+for subj in subjects:
+    print subj
+    if not os.path.isfile('MEG/%s/%s-ica.fif'%(subj,subj)):
+        random.seed(42) #something to do with starting at the same spot for all subjects
+        print 'importing raw...'
+        raw = mne.io.read_raw_fif('MEG/%s/%s_%s-raw.fif' %(subj, subj, expt), preload=True)
+        raw.filter(0,40, method='iir')
+        ica = mne.preprocessing.ICA(n_components=0.95, method='fastica')
+        print 'fitting ica...'
+        # reject = dict(mag=2e-12) # Use this in ica.fit if too mnoisy
+        ica.fit(raw) #reject=reject
+        ica.save('MEG/%s/%s-ica.fif'%(subj,subj))
+        del raw, ica
 
-random.seed(42) #something to do with starting at the same spot for all subjects
-raw = mne.io.read_raw_fif('MEG/%s/%s_%s-raw.fif' %(subj, subj, expt), preload=True)
-raw.filter(0,40, method='iir')
-raw.info['bads']=bads #bads should be defined above
-raw.drop_channels(bads)
-ica = mne.preprocessing.ICA(n_components=0.95, method='fastica')
-ica.fit(raw)
-ica.plot_sources(raw)
-raw = ica.apply (raw, exclude=ica.exclude)
-raw.save('meg/%s/%s_%s_ICA-raw.fif' %(subj,subj, expt))
-del raw
-#==============================================================================#
-#==============================================================================#
+# Plot to make rejections
+for subj in subjects:
+    print subj
+    if not os.path.isfile('MEG/%s/%s_%s_ICA-raw.fif' %(subj,subj, expt)):
+        raw = mne.io.read_raw_fif('MEG/%s/%s_%s-raw.fif' %(subj, subj, expt), preload=True)
+        raw.filter(0,40, method='iir')
+        ica = mne.preprocessing.read_ica('MEG/%s/%s-ica.fif'%(subj,subj))
+        ica.plot_sources(raw)
+        raw_input('Press enter to continue')
+        print 'Saving...'
+        raw = ica.apply (raw, exclude=ica.exclude)
+        raw.save('MEG/%s/%s_%s_ICA-raw.fif' %(subj,subj, expt))
+        print 'Saving...'
+        del raw, ica
 
 
+        
 
 '''==========================================================================='''
 '''                             PART 2: get epochs                            '''
@@ -174,6 +188,7 @@ for subj in subjects:
     #---------------------------get evoked------------------------------------#
         print '%s: Creating evoked responses' %subj
         evoked = []
+        conditions = event_id.keys()
         for cond in conditions:
             evoked.append(epochs_rej[cond].average())
         print 'Done.'
