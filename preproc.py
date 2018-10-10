@@ -18,6 +18,7 @@ import mne, eelbrain, os, glob, pickle
 import numpy as np
 import pandas as pd
 %gui qt
+mne.set_log_level(verbose='WARNING')
 
 #=========Edit here=========#
 expt= 'TwoTones' #experiment name as written on the raw.fif
@@ -75,7 +76,7 @@ for subj in subjects:
         del raw, ica
 
 
-        
+
 
 '''==========================================================================='''
 '''                             PART 2: get epochs                            '''
