@@ -49,11 +49,10 @@ print ">> ICA not done for %s (%s)" %(No_ica, len(No_ica))
 for subj in subjects:
     print subj
     if not os.path.isfile('MEG/%s/%s-ica.fif'%(subj,subj)):
-        random.seed(42) #something to do with starting at the same spot for all subjects
         print 'importing raw...'
         raw = mne.io.read_raw_fif('MEG/%s/%s_%s-raw.fif' %(subj, subj, expt), preload=True)
         raw.filter(0,40, method='iir')
-        ica = mne.preprocessing.ICA(n_components=0.95, method='fastica')
+        ica = mne.preprocessing.ICA(n_components=0.95, method='fastica', random_state=42)
         print 'fitting ica...'
         # reject = dict(mag=2e-12) # Use this in ica.fit if too mnoisy
         ica.fit(raw) #reject=reject
