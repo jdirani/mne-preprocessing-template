@@ -1,8 +1,7 @@
-# J.Dirani - 7 February 2018
+# J.Dirani
 
-#always double check all the steps before using this template
-#especially for the photodiode and logs rejection (need to be edited)
-# edit covariance part accordingly
+# Note: This template does not include photodidoe correction and rejection of
+# epochs based on log files (yet)
 
 
 # ----------File structure-----------#
@@ -21,13 +20,22 @@ import pandas as pd
 mne.set_log_level(verbose='WARNING')
 
 #=========Edit here=========#
-expt= 'TwoTones' #experiment name as written on the raw.fif
+expt = 'TwoTones' #experiment name as written on the -raw.fif
 ROOT = '/Users/my_user/data_file/'
-os.chdir(ROOT)
 subjects_dir = ROOT+'MRI/'
-subjects = ['A0176', 'A0192', 'A0216'] #list of subjs
-event_id = dict(hi=223, lo=191)
+subjects = ['A0176', 'A0192', 'A0216']
+event_id = dict(hi=223, lo=191) #conditions associated with each trigger
+os.chdir(ROOT) #setting current dir
+
+epoch_tmin = -0.1
+epoch_tmax = 0.6
+epoch_baseline = (-0.1,0)
+decim = 1 # 1 for no decimation
+
+SNR = 3 # 3 for ANOVAs, 2 for regressions
+fixed = False # False for orientation free, True for fixed orientation
 #===========================#
+
 
 '''==========================================================================='''
 '''                           PART 1: Filter, bads, ICA                       '''
@@ -35,6 +43,7 @@ event_id = dict(hi=223, lo=191)
 
 # ------------------ Check which subj dont have ICA files --------------------- #
 #Looks for a ..._ICA-raw.fif file. Post ICA+filtered data must be named accordingly
+#Not necessary, just a quick way to check how many ICAs are left before running the loops
 No_ica=[]
 for subj in subjects:
     if os.path.isfile('MEG/%s/%s_%s_ICA-raw.fif'%(subj, subj, expt)):
@@ -49,11 +58,10 @@ print ">> ICA not done for %s (%s)" %(No_ica, len(No_ica))
 for subj in subjects:
     print subj
     if not os.path.isfile('MEG/%s/%s-ica.fif'%(subj,subj)):
-        random.seed(42) #something to do with starting at the same spot for all subjects
         print 'importing raw...'
         raw = mne.io.read_raw_fif('MEG/%s/%s_%s-raw.fif' %(subj, subj, expt), preload=True)
         raw.filter(0,40, method='iir')
-        ica = mne.preprocessing.ICA(n_components=0.95, method='fastica')
+        ica = mne.preprocessing.ICA(n_components=0.95, method='fastica', random_state=42)
         print 'fitting ica...'
         # reject = dict(mag=2e-12) # Use this in ica.fit if too mnoisy
         ica.fit(raw) #reject=reject
@@ -95,51 +103,20 @@ for subj in subjects:
         picks_meg = mne.pick_types(raw.info, meg=True, eeg=False, eog=True, stim=False)
 
         #-----------------------Fix photodiode shift---------------------------#
-        # #This part looks for the average photodiode delay and aligns events accordingly
-        # #For details, see comments in script in NYU Google Drive:
-        # #/NYU/Z-Mehods\ library/Meg_data_analysis/Miscphotodiode_average_delay.py
-        # print "Fixing photodiode delay..."
-        # photodiode = mne.find_events(raw,stim_channel='MISC 010',min_duration=0.005)
-        #
-        # def find_the_first_real_photodiode():
-        #     first_event=events[0][0]
-        #     for i in range(len(photodiode)):
-        #         shift = photodiode[i][0]-first_event
-        #         if abs(shift) < 60:
-        #             return i
-        #
-        # real_diode = find_the_first_real_photodiode()
-        # diode_times=[] #first 800 real photodiode times
-        # for t in range(real_diode,real_diode+20): #first 20 real photodiode firings.
-        #     diode_times.append(photodiode[t][0])
-        #
-        # diode_shifts=[] #The first 20 photodiode shifts
-        # for i in range(len(diode_times)):
-        #     shft=diode_times[i]-events[i][0]
-        #     diode_shifts.append(shft)
-        # #Compute average and SD
-        # average_shift=np.average(diode_shifts)
-        # std_shift=np.std(diode_shifts)
-        # #Shift events accordingly
-        # for i in range(len(events)):
-        #     events[i][0]+= abs(average_shift)
-        #
-        # print 'Average photodiode delay = ', average_shift
-        # print 'SD photodiode delay = ', std_shift
-        # raw_input('Press Enter if values look OK: ')
-        #
-        # del photodiode, real_diode, diode_times, diode_shifts, average_shift, std_shift
+        # Photodiode correction to be added here. Will be added later.
+
+
 
         #----------------------Reject epochs based on logs---------------------#
         # print "Rejecting epochs based on logs"
-        # ogfile='MEG/%s/initial_output/%s_log_mask.csv' %(subj,subj)
-        # log=pd.read_csv(logfile)
-        # log['ep_mask']=np.where(log['mask']==1, True, False)
+        # logfile_dir = 'MEG/%s/initial_output/%s_log_mask.csv' %(subj,subj)
+        # logfile = pd.read_csv(logfile_dir)
+        # logfile['epochs_mask'] = np.where(logfile['mask']==1, True, False)
         #
-        epochs = mne.Epochs(raw, events, event_id=event_id, tmin=-0.1, tmax=0.6, baseline=(None,0), picks=picks_meg, decim=5, preload=True)
+        epochs = mne.Epochs(raw, events, event_id=event_id, tmin=epoch_tmin, tmax=epoch_tmax, baseline=epoch_baseline, picks=picks_meg, decim=decim, preload=True)
         #
-        # epochs_hits=epochs[log.ep_mask]
-        # del log
+        # epochs = epochs[logfile.ep_mask]
+        # del logfile
 
         #----------------------Manual epochs rejection-------------------------#
         print ">> Epochs rejection for subj=%s" %subj
@@ -152,10 +129,20 @@ for subj in subjects:
         else:
             print 'Rejections file for %s does not exist, opening GUI...' %(subj)
             eelbrain.gui.select_epochs(epochs, vlim=2e-12, mark=['MEG 087','MEG 130'])
-            raw_input('NOTE: Save as MEG/subj/subj_rejfile.pickled. \nPress enter when you are done rejecting epochs in the GUI...')
+            raw_input('NOTE: Save as MEG/%s/%s_rejfile.pickled. \nPress enter when you are done rejecting epochs in the GUI...'%(subj,subj))
+
+            # Marking bad channels
+            bad_channels = raw_input('\nMarking bad channels:\nWrite bad channels separated by COMMA (e.g. MEG 017, MEG 022)\nIf no bad channels, press enter\n>')
+            if bad_channels == '':
+                del bad_channels
+            else:
+                bad_channels = bad_channels.split(', ')
+                epochs.drop_channels(bad_channels)
+                del bad_channels
+            # Reject marked epochs
             rejfile = eelbrain.load.unpickle('MEG/%s/%s_rejfile.pickled' %(subj, subj))
             rejs = rejfile['accept'].x
-            epochs_rej=epochs[rejs]
+            epochs_rej = epochs[rejs]
         print '%s: epochs_rej created' %subj
 
 
@@ -204,7 +191,7 @@ for subj in subjects:
         else:
             print 'src for subj = %s does not exist, creating file...' %subj
             src = mne.setup_source_space(subject=subj, spacing='ico4', subjects_dir=subjects_dir)
-            src.save('MRI/%s/bem/%s-ico-4-src.fif' %(subj,subj))
+            src.save('MRI/%s/bem/%s-ico-4-src.fif' %(subj,subj), overwrite=True)
             print 'Done. File saved.'
 
 
@@ -212,11 +199,11 @@ for subj in subjects:
         print 'Creating forward solution...'
         if os.path.isfile('MEG/%s/%s-fwd.fif' %(subj, subj)):
             print 'forward soltion for subj=%s exists, loading file.' %subj
-            fwd = mne.read_forward_solution('MEG/%s/%s-fwd.fif' %(subj, subj), force_fixed = False)
+            fwd = mne.read_forward_solution('MEG/%s/%s-fwd.fif' %(subj, subj))
             print 'Done.'
         else:
             print 'forward soltion for subj=%s does not exist, creating file.' %subj
-            fwd = mne.make_forward_solution(info=info, trans=trans, src=src, bem=bem, ignore_ref=True) #?????? DOUBLE CHECK THIS
+            fwd = mne.make_forward_solution(info=info, trans=trans, src=src, bem=bem, ignore_ref=True)
             mne.write_forward_solution('MEG/%s/%s-fwd.fif' %(subj, subj), fwd)
             print 'Done. File saved.'
 
@@ -236,8 +223,10 @@ for subj in subjects:
 
         #---------------------Inverse operator-------------------------#
         print 'Getting inverse operator'
-        inv = mne.minimum_norm.make_inverse_operator(info, fwd, cov, depth=None, loose= None, fixed=False) #fixed=False: Ignoring dipole direction.
-        SNR = 3 # SNR = 3 for evoked, 2 for epochs
+        if fixed = True:
+            fwd = mne.convert_forward_solution(fwd, surf_ori=True)
+
+        inv = mne.minimum_norm.make_inverse_operator(info, fwd, cov, depth=None, loose=None, fixed=fixed) #fixed=False: Ignoring dipole direction.
         lambda2 = 1.0 / 3.0 ** SNR
 
         #--------------------------STCs--------------------------------#
@@ -245,7 +234,6 @@ for subj in subjects:
         print '%s: Creating STCs...'%subj
         os.makedirs('STC/%s' %subj)
         for ev in evoked:
-            #ev.crop(0,0.7) if need to crop
             stc = mne.minimum_norm.apply_inverse(ev, inv, lambda2=lambda2, method='dSPM')
             #mophing stcs to the fsaverage:
             vertices_to = mne.grade_to_vertices('fsaverage', grade=4, subjects_dir=subjects_dir) #fsaverage's source space
