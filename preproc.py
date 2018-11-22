@@ -223,7 +223,7 @@ for subj in subjects:
 
         #---------------------Inverse operator-------------------------#
         print 'Getting inverse operator'
-        if fixed = True:
+        if fixed == True:
             fwd = mne.convert_forward_solution(fwd, surf_ori=True)
 
         inv = mne.minimum_norm.make_inverse_operator(info, fwd, cov, depth=None, loose=None, fixed=fixed) #fixed=False: Ignoring dipole direction.
