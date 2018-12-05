@@ -100,7 +100,7 @@ for subj in subjects:
         #-----------------------------Find events------------------------------#
         print "%s: Finding events..." %subj
         events = mne.find_events(raw,min_duration=0.002)
-        picks_meg = mne.pick_types(raw.info, meg=True, eeg=False, eog=True, stim=False)
+        picks_meg = mne.pick_types(raw.info, meg=True, eeg=False, eog=False, stim=False)
 
         #-----------------------Fix photodiode shift---------------------------#
         # Photodiode correction to be added here. Will be added later.
