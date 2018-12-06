@@ -13,7 +13,7 @@
 #     STC>
 
 
-import mne, eelbrain, os, glob, pickle
+import mne, eelbrain, os, glob, pickle, time
 import numpy as np
 import pandas as pd
 %gui qt
@@ -55,6 +55,7 @@ print ">> ICA not done for %s (%s)" %(No_ica, len(No_ica))
 
 # ----------------------------------- ICA ------------------------------------ #
 # compute and save ICA
+tic = time.clock()
 for subj in subjects:
     print subj
     if not os.path.isfile('MEG/%s/%s-ica.fif'%(subj,subj)):
@@ -67,6 +68,8 @@ for subj in subjects:
         ica.fit(raw) #reject=reject
         ica.save('MEG/%s/%s-ica.fif'%(subj,subj))
         del raw, ica
+toc = time.clock()
+print tic - toc
 
 # Plot to make rejections
 for subj in subjects:
