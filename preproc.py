@@ -32,6 +32,7 @@ epoch_tmax = 0.6
 epoch_baseline = (-0.1,0)
 decim = 1 # 1 for no decimation
 
+photodiode_realignment = True
 SNR = 3 # 3 for ANOVAs, 2 for regressions
 fixed = False # False for orientation free, True for fixed orientation
 #===========================#
@@ -103,10 +104,19 @@ for subj in subjects:
         picks_meg = mne.pick_types(raw.info, meg=True, eeg=False, eog=False, stim=False)
 
         #-----------------------Fix photodiode shift---------------------------#
-        # Photodiode correction to be added here. Will be added later.
-
-
-
+        if photodiode_realignment == True:
+            photodiode = mne.find_events(raw,stim_channel='MISC 010',min_duration=0.005)
+            if len(events) != len(photodiode):
+                raise ValueError('Length of photodiode and events dont match.')
+            delays = []
+            for i in range(len(events)):
+                delay = photodiode[i][0] - events[i][0]
+                delays.append(delay)
+            raw_input('Average photodiode delay = %s. Ok?' %(np.mean(delays)))
+            print 'Realigning events...'
+            for i in range(len(events)):
+                events[i][0] = photodiode[i][0]
+        
         #----------------------Reject epochs based on logs---------------------#
         # print "Rejecting epochs based on logs"
         # logfile_dir = 'MEG/%s/initial_output/%s_log_mask.csv' %(subj,subj)
