@@ -1,7 +1,6 @@
 # J.Dirani
 
-# Note: This template does not include photodidoe correction and rejection of
-# epochs based on log files (yet)
+# epochs rejection based on log files not included
 
 
 # ----------File structure-----------#
