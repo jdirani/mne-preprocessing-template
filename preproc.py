@@ -249,7 +249,7 @@ for subj in subjects:
             vertices_to = mne.grade_to_vertices('fsaverage', grade=4, subjects_dir=subjects_dir) #fsaverage's source space
 #             stc_morph = mne.morph_data(subject_from=subj, subject_to='fsaverage',stc_from=stc, grade=vertices_to,subjects_dir=subjects_dir)
             morph_mat = mne.compute_morph_matrix(subject_from=subj, subject_to=‘fsaverage’, vertices_from=stc.vertices, vertices_to=vertices_to, subjects_dir=subjects_dir)
-            stc_morph = mne.morph_data_precomputed(subject_from=subj, subject_to=‘fsaverage’, stc_from=stc, grade=vertices_to, morph_mat=morph_mat)
+            stc_morph = mne.morph_data_precomputed(subject_from=subj, subject_to=‘fsaverage’, stc_from=stc, vertices_to=vertices_to, morph_mat=morph_mat)
             stc_morph.save('STC/%s/%s_%s_dSPM' %(subj,subj,ev.comment))
             del stc, stc_morph
         print '>> DONE CREATING STCS FOR SUBJ=%s'%subj
