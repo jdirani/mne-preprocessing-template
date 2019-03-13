@@ -237,7 +237,7 @@ for subj in subjects:
 
         inv = mne.minimum_norm.make_inverse_operator(info, fwd, cov, depth=None, loose=None, fixed=fixed) #fixed=False: Ignoring dipole direction.
         # lambda2 = 1.0 / 3.0 ** SNR
-        lambda2 = 1.0 / SNR * *2.0
+        lambda2 = 1.0 / SNR ** 2.0
 
         #--------------------------STCs--------------------------------#
 
