@@ -21,7 +21,7 @@ mne.set_log_level(verbose='WARNING')
 #=========Edit here=========#
 expt = 'TwoTones' #experiment name as written on the -raw.fif
 ROOT = '/Users/my_user/data_file/'
-subjects_dir = ROOT+'MRI/'
+subjects_dir = os.path.join(ROOT, 'MRI')
 subjects = ['A0176', 'A0192', 'A0216']
 event_id = dict(hi=223, lo=191) #conditions associated with each trigger
 os.chdir(ROOT) #setting current dir
