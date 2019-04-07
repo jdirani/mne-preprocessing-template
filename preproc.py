@@ -146,7 +146,7 @@ for subj in subjects:
                 del bad_channels
             else:
                 bad_channels = bad_channels.split(', ')
-                epochs.drop_channels(bad_channels)
+                epochs.interpolate_bads(bad_channels)
                 del bad_channels
             # Reject marked epochs
             rejfile = eelbrain.load.unpickle('MEG/%s/%s_rejfile.pickled' %(subj, subj))
