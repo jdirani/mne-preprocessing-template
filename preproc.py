@@ -92,7 +92,7 @@ for subj in subjects:
 
 for subj in subjects:
     print '>>  Getting epochs: subj=%s'%subj
-    if os.path.isfile('MEG/%s/epochs' %subj):
+    if os.path.isfile('MEG/%s/%s-epo.fif' %(subj,subj)):
         print '>> EPOCHS ALREADY CREATED FOR SUBJ=%s'%subj
     else:
         print "%s: Importing filtered+ICA data" %subj
