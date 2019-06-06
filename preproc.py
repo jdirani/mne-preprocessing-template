@@ -159,9 +159,8 @@ for subj in subjects:
         print 'Saving epochs to file...'
         info = raw.info
         pickle.dump(info, open('MEG/%s/%s-info.pickled' %(subj,subj), 'wb'))
-
-        if not os.path.isfile('MEG/%s/%s-epo.fif'%(subj,subj)):
-            epochs_rej.save('MEG/%s/%s-epo.fif' %(subj,subj))
+        epochs_rej.save('MEG/%s/%s-epo.fif' %(subj,subj))
+        
         del raw
         print 'Done.'
 
