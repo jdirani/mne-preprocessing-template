@@ -246,6 +246,13 @@ for subj in subjects:
             src.save(src_fname, overwrite=True)
             print 'Done. File saved.'
 
+        #-------------------------- BEM ------------------------------#
+        if not os.path.isfile(bem_fname):
+            print 'BEM for subj=%s does not exists, creating...' %subj
+            conductivity = (0.3,) # for single layer
+            model = mne.make_bem_model(subject=subj, ico=4, conductivity=conductivity, subjects_dir=subjects_dir)
+            bem = mne.make_bem_solution(model)
+            mne.write_bem_solution(bem_fname, bem)
 
         #--------------------Forward solution-------------------------#
         print 'Creating forward solution...'
