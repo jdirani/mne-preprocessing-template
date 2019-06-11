@@ -211,7 +211,7 @@ for subj in subjects:
         epochs_rej = mne.read_epochs('MEG/%s/%s-epo.fif' %(subj,subj))
         trans = mne.read_trans('MEG/%s/%s-trans.fif' %(subj,subj))
 
-        bem_fname = join(subjects_dir, subj, 'bem/%s-bem-sol.fif'%subj)
+        bem_fname = glob.glob(join(subjects_dir, subj) + '/bem/*-bem-sol.fif')[0]
         src_fname = join(subjects_dir, '%s/bem/%s-ico-4-src.fif' %(subj,subj))
         fwd_fname = 'MEG/%s/%s-fwd.fif' %(subj, subj)
         cov_fname = 'MEG/%s/%s-cov.fif' %(subj,subj)
