@@ -30,12 +30,12 @@ os.chdir(ROOT) #setting current dir
 epoch_tmin = -0.1
 epoch_tmax = 0.6
 epoch_baseline = (-0.1,0)
-decim = 1 # 1 for no decimation
+decim = None
 equalize_epochs = False
 expected_nb_events = 136
 
 photodiode_realignment = True
-SNR = 3 # 3 for ANOVAs, 2 for regressions
+SNR = 3 # 3 for ANOVAs, 2 for single trial analyses
 fixed = False # False for orientation free, True for fixed orientation
 #===========================#
 
