@@ -103,8 +103,7 @@ for subj in subjects:
         #-----------------------------Find events------------------------------#
         print "%s: Finding events..." %subj
         events = mne.find_events(raw,min_duration=0.002)
-        if len(events) != expected_nb_events:
-            print "WARNING: unexpected nb of events found (not %s)"%expected_nb_events
+        assert(len(events) == expected_nb_events)
         picks_meg = mne.pick_types(raw.info, meg=True, eeg=False, eog=False, stim=False)
 
         #-----------------------Fix photodiode shift---------------------------#
