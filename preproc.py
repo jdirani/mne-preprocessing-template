@@ -30,7 +30,7 @@ os.chdir(ROOT) #setting current dir
 epoch_tmin = -0.1
 epoch_tmax = 0.6
 epoch_baseline = (-0.1,0)
-decim = None
+decim = 1
 equalize_epochs = False
 expected_nb_events = 136
 
